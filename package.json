@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "description": "ESP32 BME280 Weather Logger",
   "dependencies": {
-    "@libsql/client": "^0.6.0"
-  }  
+    "@libsql/client": "^0.6.0" 
     "builds": [
         {
             "src": "index.js",
