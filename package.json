@@ -1,0 +1,11 @@
+{
+  "name": "weather-logger",
+  "version": "1.0.0",
+  "description": "ESP32 BME280 Weather Logger",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.6.0"
+  }
+}
