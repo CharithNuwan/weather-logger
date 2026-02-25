@@ -2,6 +2,7 @@
   "name": "weather-logger",
   "version": "1.0.0",
   "description": "ESP32 BME280 Weather Logger",
+  "type": "module",
   "scripts": {
     "dev": "vercel dev"
   },
