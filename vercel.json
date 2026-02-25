@@ -1,6 +1,8 @@
 {
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/(.*)",     "destination": "/api/page" }
+    { "source": "/api/save",   "destination": "/api/save" },
+    { "source": "/api/data",   "destination": "/api/data" },
+    { "source": "/api/config", "destination": "/api/config" },
+    { "source": "/(.*)",       "destination": "/api/page" }
   ]
 }
