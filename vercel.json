@@ -1,8 +1,15 @@
 {
-  "rewrites": [
-    { "source": "/api/save",   "destination": "/api/save" },
-    { "source": "/api/data",   "destination": "/api/data" },
-    { "source": "/api/config", "destination": "/api/config" },
-    { "source": "/(.*)",       "destination": "/api/page" }
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/*.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    { "src": "/api/save",   "dest": "/api/save.js" },
+    { "src": "/api/data",   "dest": "/api/data.js" },
+    { "src": "/api/config", "dest": "/api/config.js" },
+    { "src": "/(.*)",       "dest": "/api/page.js" }
   ]
 }
