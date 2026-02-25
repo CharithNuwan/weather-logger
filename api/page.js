@@ -1,62 +1,24 @@
-export default function handler(request) {
-  let path = '/';
-  try {
-    if (request.url && request.url.startsWith('http')) {
-      path = new URL(request.url).pathname;
-    } else {
-      path = (request.url || request.path || '/').toString().split('?')[0] || '/';
-    }
-  } catch (_) {
-    path = (request.url || '/').toString().split('?')[0] || '/';
+// api/page.js — serves all HTML pages
+module.exports = async function handler(req, res) {
+  const path = req.url?.split('?')[0] || '/';
+
+  if (path === '/' || path === '/dashboard') {
+    return res.status(200).setHeader('Content-Type','text/html').send(dashboardHTML());
   }
-  if (!path || path === '') path = '/';
-
-  console.log('[page] request path:', path, 'url:', request?.url ? '(present)' : '(missing)');
-
-  try {
-    if (path === '/' || path === '/dashboard') {
-      return new Response(dashboardHTML(), {
-        status: 200,
-        headers: { 'Content-Type': 'text/html' },
-      });
-    }
-    if (path === '/patterns') {
-      return new Response(patternsHTML(), {
-        status: 200,
-        headers: { 'Content-Type': 'text/html' },
-      });
-    }
-    if (path === '/summary') {
-      return new Response(summaryHTML(), {
-        status: 200,
-        headers: { 'Content-Type': 'text/html' },
-      });
-    }
-    if (path === '/predict') {
-      return new Response(predictHTML(), {
-        status: 200,
-        headers: { 'Content-Type': 'text/html' },
-      });
-    }
-    if (path === '/settings') {
-      return new Response(settingsHTML(), {
-        status: 200,
-        headers: { 'Content-Type': 'text/html' },
-      });
-    }
-    if (path === '/favicon.ico' || path === '/favicon.png') {
-      return new Response(null, { status: 204 });
-    }
-
-    return new Response('Not found', { status: 404 });
-  } catch (err) {
-    console.error('[page] handler error:', err?.message || err);
-    console.error('[page] stack:', err?.stack);
-    return new Response(
-      `Error: ${err?.message || String(err)}`,
-      { status: 500, headers: { 'Content-Type': 'text/plain' } }
-    );
+  if (path === '/patterns') {
+    return res.status(200).setHeader('Content-Type','text/html').send(patternsHTML());
   }
+  if (path === '/summary') {
+    return res.status(200).setHeader('Content-Type','text/html').send(summaryHTML());
+  }
+  if (path === '/predict') {
+    return res.status(200).setHeader('Content-Type','text/html').send(predictHTML());
+  }
+  if (path === '/settings') {
+    return res.status(200).setHeader('Content-Type','text/html').send(settingsHTML());
+  }
+
+  return res.status(404).send('Not found');
 }
 
 // ============================================================
