@@ -5,6 +5,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  console.log('[config] request method:', req.method);
 
   try {
     await initDB();
@@ -55,7 +56,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ status: 'error', msg: 'Method not allowed' });
 
   } catch (err) {
-    console.error(err);
+    console.error('[config] error:', err?.message || err);
+    console.error('[config] stack:', err?.stack);
     return res.status(500).json({ status: 'error', msg: err.message });
   }
 }
