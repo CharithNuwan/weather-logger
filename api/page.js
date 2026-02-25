@@ -1,4 +1,3 @@
-// api/page.js — serves all HTML pages (Vercel Web Standard Request/Response)
 export default function handler(request) {
   let path = '/';
   try {
@@ -12,41 +11,52 @@ export default function handler(request) {
   }
   if (!path || path === '') path = '/';
 
-  if (path === '/' || path === '/dashboard') {
-    return new Response(dashboardHTML(), {
-      status: 200,
-      headers: { 'Content-Type': 'text/html' },
-    });
-  }
-  if (path === '/patterns') {
-    return new Response(patternsHTML(), {
-      status: 200,
-      headers: { 'Content-Type': 'text/html' },
-    });
-  }
-  if (path === '/summary') {
-    return new Response(summaryHTML(), {
-      status: 200,
-      headers: { 'Content-Type': 'text/html' },
-    });
-  }
-  if (path === '/predict') {
-    return new Response(predictHTML(), {
-      status: 200,
-      headers: { 'Content-Type': 'text/html' },
-    });
-  }
-  if (path === '/settings') {
-    return new Response(settingsHTML(), {
-      status: 200,
-      headers: { 'Content-Type': 'text/html' },
-    });
-  }
-  if (path === '/favicon.ico') {
-    return new Response(null, { status: 204 });
-  }
+  console.log('[page] request path:', path, 'url:', request?.url ? '(present)' : '(missing)');
 
-  return new Response('Not found', { status: 404 });
+  try {
+    if (path === '/' || path === '/dashboard') {
+      return new Response(dashboardHTML(), {
+        status: 200,
+        headers: { 'Content-Type': 'text/html' },
+      });
+    }
+    if (path === '/patterns') {
+      return new Response(patternsHTML(), {
+        status: 200,
+        headers: { 'Content-Type': 'text/html' },
+      });
+    }
+    if (path === '/summary') {
+      return new Response(summaryHTML(), {
+        status: 200,
+        headers: { 'Content-Type': 'text/html' },
+      });
+    }
+    if (path === '/predict') {
+      return new Response(predictHTML(), {
+        status: 200,
+        headers: { 'Content-Type': 'text/html' },
+      });
+    }
+    if (path === '/settings') {
+      return new Response(settingsHTML(), {
+        status: 200,
+        headers: { 'Content-Type': 'text/html' },
+      });
+    }
+    if (path === '/favicon.ico' || path === '/favicon.png') {
+      return new Response(null, { status: 204 });
+    }
+
+    return new Response('Not found', { status: 404 });
+  } catch (err) {
+    console.error('[page] handler error:', err?.message || err);
+    console.error('[page] stack:', err?.stack);
+    return new Response(
+      `Error: ${err?.message || String(err)}`,
+      { status: 500, headers: { 'Content-Type': 'text/plain' } }
+    );
+  }
 }
 
 // ============================================================
