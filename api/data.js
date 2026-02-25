@@ -3,11 +3,12 @@ import { getDB, initDB } from '../lib/db.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
+  const type = req.query?.type || 'latest';
+  console.log('[data] request type:', type);
 
   try {
     await initDB();
     const db  = getDB();
-    const type = req.query.type || 'latest';
 
     // Latest single reading
     if (type === 'latest') {
@@ -145,7 +146,8 @@ export default async function handler(req, res) {
     return res.status(400).json({ status: 'error', msg: 'Unknown type' });
 
   } catch (err) {
-    console.error(err);
+    console.error('[data] error:', err?.message || err);
+    console.error('[data] stack:', err?.stack);
     return res.status(500).json({ status: 'error', msg: err.message });
   }
 }
