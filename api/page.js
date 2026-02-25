@@ -1,24 +1,52 @@
-// api/page.js — serves all HTML pages
-export default function handler(req, res) {
-  const path = req.url?.split('?')[0] || '/';
+// api/page.js — serves all HTML pages (Vercel Web Standard Request/Response)
+export default function handler(request) {
+  let path = '/';
+  try {
+    if (request.url && request.url.startsWith('http')) {
+      path = new URL(request.url).pathname;
+    } else {
+      path = (request.url || request.path || '/').toString().split('?')[0] || '/';
+    }
+  } catch (_) {
+    path = (request.url || '/').toString().split('?')[0] || '/';
+  }
+  if (!path || path === '') path = '/';
 
   if (path === '/' || path === '/dashboard') {
-    return res.status(200).setHeader('Content-Type','text/html').send(dashboardHTML());
+    return new Response(dashboardHTML(), {
+      status: 200,
+      headers: { 'Content-Type': 'text/html' },
+    });
   }
   if (path === '/patterns') {
-    return res.status(200).setHeader('Content-Type','text/html').send(patternsHTML());
+    return new Response(patternsHTML(), {
+      status: 200,
+      headers: { 'Content-Type': 'text/html' },
+    });
   }
   if (path === '/summary') {
-    return res.status(200).setHeader('Content-Type','text/html').send(summaryHTML());
+    return new Response(summaryHTML(), {
+      status: 200,
+      headers: { 'Content-Type': 'text/html' },
+    });
   }
   if (path === '/predict') {
-    return res.status(200).setHeader('Content-Type','text/html').send(predictHTML());
+    return new Response(predictHTML(), {
+      status: 200,
+      headers: { 'Content-Type': 'text/html' },
+    });
   }
   if (path === '/settings') {
-    return res.status(200).setHeader('Content-Type','text/html').send(settingsHTML());
+    return new Response(settingsHTML(), {
+      status: 200,
+      headers: { 'Content-Type': 'text/html' },
+    });
+  }
+  if (path === '/favicon.ico') {
+    return new Response(null, { status: 204 });
   }
 
-  return res.status(404).send('Not found');
+  return new Response('Not found', { status: 404 });
 }
 
 // ============================================================
