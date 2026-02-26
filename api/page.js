@@ -838,5 +838,5 @@ function showMsg(txt, bg, col) {
 
 load();
 </script>
-</body></html>`; 
+</body></html>\`;
 }
