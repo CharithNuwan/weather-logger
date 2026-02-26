@@ -1,4 +1,4 @@
-// api/save.js — ESP32 sends data here
+// api/save.js — ESP32 sends weather data here
 const { getDB, initDB } = require('../lib/db');
 
 module.exports = async function handler(req, res) {
@@ -11,19 +11,33 @@ module.exports = async function handler(req, res) {
     const { temp, humidity, pressure, altitude } = req.query;
 
     if (!temp || !humidity || !pressure || !altitude) {
-      return res.status(400).json({ status: 'error', msg: 'Missing fields' });
+      return res.status(400).json({
+        status: 'error',
+        msg:    'Missing fields! Need: temp, humidity, pressure, altitude'
+      });
     }
 
+    // Save to database
     await db.execute({
-      sql:  `INSERT INTO weather_data (temp, humidity, pressure, altitude) VALUES (?, ?, ?, ?)`,
-      args: [parseFloat(temp), parseFloat(humidity), parseFloat(pressure), parseFloat(altitude)]
+      sql:  'INSERT INTO weather_data (temp, humidity, pressure, altitude) VALUES (?, ?, ?, ?)',
+      args: [
+        parseFloat(temp),
+        parseFloat(humidity),
+        parseFloat(pressure),
+        parseFloat(altitude)
+      ]
     });
 
     // Get config to send back to ESP32
-    const configRows = await db.execute('SELECT key, value FROM config');
+    const rows = await db.execute('SELECT key, value FROM config');
     const config = {};
-    configRows.rows.forEach(r => { config[r[0] || r.key] = r[1] || r.value; });
+    rows.rows.forEach(r => {
+      config[r.key || r[0]] = r.value || r[1];
+    });
 
+    // ESP32 reads this response!
+    // send_interval → ESP32 adjusts timing
+    // restart → ESP32 restarts itself!
     return res.status(200).json({
       status:        'ok',
       saved:         true,
@@ -35,6 +49,9 @@ module.exports = async function handler(req, res) {
 
   } catch (err) {
     console.error('[save] Error:', err.message);
-    return res.status(500).json({ status: 'error', msg: err.message });
+    return res.status(500).json({
+      status: 'error',
+      msg:    err.message
+    });
   }
 };
