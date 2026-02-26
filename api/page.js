@@ -194,7 +194,7 @@ function mkChart(id,color,label){
 
 function updChart(c,data,field){
   if(!c)return;
-  c.data.labels=data.map(d=>new Date(d.recorded_at+'Z').toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
+  c.data.labels=data.map(d=>new Date(d.recorded_at.replace(' ','T')+'Z').toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
   c.data.datasets[0].data=data.map(d=>parseFloat(d[field]).toFixed(2));
   c.update('none');
 }
@@ -245,7 +245,7 @@ async function load(){
       const cf=comfort(parseFloat(t),parseFloat(h));
       g('cfi').textContent=cf.i; g('cfl').textContent=cf.l;
       g('cfl').style.color=cf.c; g('cfd').textContent=cf.d;
-      const ago=Math.round((Date.now()-new Date(d1.data.recorded_at+'Z').getTime())/1000);
+      const ago=Math.round((Date.now()-new Date(d1.data.recorded_at.replace(' ','T')+'Z').getTime())/1000);
       g('ds').textContent=ago<3600?ago+'s ago':'Long ago';
       const online=ago<180;
       g('sdot').className='sd'+(online?' live':'');
@@ -628,7 +628,7 @@ async function load() {
 
   // ── Device Status ──
   const row = d2.data;
-  const ago = row ? Math.round((Date.now() - new Date(row.recorded_at + 'Z').getTime()) / 1000) : 999;
+  const ago = row ? Math.round((Date.now() - new Date(row.recorded_at.replace(' ','T')+'Z').getTime()) / 1000) : 999;
   const online = ago < 180;
   g('ds2').innerHTML = \`
     <div class="sr">
@@ -838,5 +838,5 @@ function showMsg(txt, bg, col) {
 
 load();
 </script>
-</body></html>`;   
+</body></html>\`;
 }
