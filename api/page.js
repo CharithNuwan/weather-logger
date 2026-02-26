@@ -836,5 +836,7 @@ function showMsg(txt, bg, col) {
   setTimeout(() => el.style.display = 'none', 4000);
 }
 
+load();
+</script>
 </body></html>`;
 }
