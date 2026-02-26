@@ -7,9 +7,9 @@
     }
   ],
   "routes": [
-    { "src": "/api/save",   "dest": "/api/save.js" },
-    { "src": "/api/data",   "dest": "/api/data.js" },
+    { "src": "/api/save",   "dest": "/api/save.js"   },
+    { "src": "/api/data",   "dest": "/api/data.js"   },
     { "src": "/api/config", "dest": "/api/config.js" },
-    { "src": "/(.*)",       "dest": "/api/page.js" }
+    { "src": "/(.*)",       "dest": "/api/page.js"   }
   ]
 }
