@@ -1,4 +1,4 @@
-// api/config.js — get and update ESP32 settings
+// api/config.js — get and update ESP32 settings from web
 const { getDB, initDB } = require('../lib/db');
 
 module.exports = async function handler(req, res) {
@@ -14,13 +14,17 @@ module.exports = async function handler(req, res) {
     await initDB();
     const db = getDB();
 
+    // GET — return all config
     if (req.method === 'GET') {
       const rows = await db.execute('SELECT key, value FROM config');
       const config = {};
-      rows.rows.forEach(r => { config[r[0] || r.key] = r[1] || r.value; });
+      rows.rows.forEach(r => {
+        config[r.key || r[0]] = r.value || r[1];
+      });
       return res.status(200).json({ status: 'ok', config });
     }
 
+    // POST — update settings from web dashboard
     if (req.method === 'POST') {
       let body = req.body;
       if (typeof body === 'string') {
@@ -28,7 +32,10 @@ module.exports = async function handler(req, res) {
       }
       body = body || {};
 
-      const allowed = ['send_interval','device_name','location','ota_available','firmware_ver'];
+      const allowed = [
+        'send_interval', 'device_name', 'location',
+        'ota_available', 'firmware_ver'
+      ];
 
       for (const [key, value] of Object.entries(body)) {
         if (!allowed.includes(key)) continue;
@@ -38,14 +45,23 @@ module.exports = async function handler(req, res) {
         });
       }
 
+      // Remote restart — ESP32 restarts on next data send!
       if (body.restart) {
         await db.execute({
-          sql: 'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
+          sql:  'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
           args: ['ota_available', '1']
         });
         await db.execute({
-          sql: 'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
+          sql:  'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
           args: ['last_restart', new Date().toISOString()]
+        });
+      }
+
+      // Clear restart flag
+      if (body.clear_restart) {
+        await db.execute({
+          sql:  'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
+          args: ['ota_available', '0']
         });
       }
 
