@@ -508,106 +508,335 @@ load();
 </script></body></html>`;
 }
 
-// ── SETTINGS ───────────────────────────────────────────────
+// This is the SETTINGS page only — replace settingsHTML() in page.js
+
 function settingsHTML() {
   return head('Settings') + nav('settings') + `
 <div class="page">
   <div class="pt">REMOTE <span style="color:var(--teal)">SETTINGS</span></div>
-  <div class="ps">CHANGE ESP32 SETTINGS FROM ANYWHERE · REMOTE RESTART</div>
+  <div class="ps">CHANGE ESP32 SETTINGS · REMOTE RESTART · FIRMWARE UPDATE</div>
   <div class="hl"></div>
+
   <div class="g2">
+    <!-- LEFT: Device Settings -->
     <div class="panel">
       <div class="ptl">▸ ESP32 CONFIGURATION</div>
       <div id="sf" class="ld">LOADING...</div>
     </div>
+
+    <!-- RIGHT: Status + Restart -->
     <div class="panel">
       <div class="ptl">▸ DEVICE STATUS</div>
       <div id="ds2" class="ld">LOADING...</div>
       <div style="margin-top:15px">
-        <div class="ptl">▸ REMOTE COMMANDS</div>
-        <div style="margin-bottom:10px;padding:10px;background:rgba(255,51,85,.06);border:1px solid rgba(255,51,85,.2);border-radius:3px">
-          <div style="font-size:.65rem;margin-bottom:8px">⚠️ Restart ESP32 — restarts on next data send!</div>
-          <button class="btn br" onclick="doRestart()" style="width:100%">🔄 RESTART ESP32</button>
-        </div>
-        <div style="padding:10px;background:rgba(0,229,204,.06);border:1px solid rgba(0,229,204,.2);border-radius:3px">
-          <div style="font-size:.62rem;color:var(--dim);line-height:1.8">
-            How remote restart works:<br>
-            1. Click restart here<br>
-            2. Server flags restart=true<br>
-            3. ESP32 sends next data<br>
-            4. Server replies restart:true<br>
-            5. ESP32 restarts! ✅
+        <div class="ptl">▸ REMOTE RESTART</div>
+        <div style="padding:10px;background:rgba(255,51,85,.06);
+             border:1px solid rgba(255,51,85,.2);border-radius:3px">
+          <div style="font-size:.65rem;margin-bottom:8px;color:var(--text)">
+            ⚠️ ESP32 restarts on next data send!
           </div>
+          <button class="btn br" onclick="doRestart()" style="width:100%">
+            🔄 RESTART ESP32
+          </button>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- FIRMWARE OTA SECTION -->
+  <div class="panel" style="margin-top:10px">
+    <div class="ptl">▸ FIRMWARE UPDATE — OTA FROM ANYWHERE</div>
+    <div id="ota-section" class="ld">LOADING...</div>
+  </div>
+
+  <!-- HOW TO USE OTA -->
+  <div class="panel" style="margin-top:10px">
+    <div class="ptl">▸ HOW TO USE FIRMWARE UPDATE</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:5px">
+      <div style="padding:10px;background:rgba(0,0,0,.2);border-radius:3px;text-align:center">
+        <div style="font-size:1.5rem;margin-bottom:5px">1️⃣</div>
+        <div style="font-family:'Orbitron',monospace;font-size:.55rem;color:var(--teal);margin-bottom:5px">COMPILE</div>
+        <div style="font-size:.65rem;color:var(--text);line-height:1.6">
+          Arduino IDE →<br>Sketch →<br>Export Compiled Binary<br>→ saves .bin file
+        </div>
+      </div>
+      <div style="padding:10px;background:rgba(0,0,0,.2);border-radius:3px;text-align:center">
+        <div style="font-size:1.5rem;margin-bottom:5px">2️⃣</div>
+        <div style="font-family:'Orbitron',monospace;font-size:.55rem;color:var(--teal);margin-bottom:5px">UPLOAD</div>
+        <div style="font-size:.65rem;color:var(--text);line-height:1.6">
+          Upload .bin to<br>GitHub Releases<br>or any direct<br>download URL
+        </div>
+      </div>
+      <div style="padding:10px;background:rgba(0,0,0,.2);border-radius:3px;text-align:center">
+        <div style="font-size:1.5rem;margin-bottom:5px">3️⃣</div>
+        <div style="font-family:'Orbitron',monospace;font-size:.55rem;color:var(--teal);margin-bottom:5px">SET HERE</div>
+        <div style="font-size:.65rem;color:var(--text);line-height:1.6">
+          Paste .bin URL<br>Set new version<br>number e.g. 1.0.1<br>Enable OTA
+        </div>
+      </div>
+      <div style="padding:10px;background:rgba(0,0,0,.2);border-radius:3px;text-align:center">
+        <div style="font-size:1.5rem;margin-bottom:5px">4️⃣</div>
+        <div style="font-family:'Orbitron',monospace;font-size:.55rem;color:var(--teal);margin-bottom:5px">AUTO!</div>
+        <div style="font-size:.65rem;color:var(--text);line-height:1.6">
+          ESP32 checks<br>every 15 min<br>Downloads + installs<br>automatically! ✅
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="msg" style="display:none;margin-top:10px;padding:10px;border-radius:3px;
        font-family:'Orbitron',monospace;font-size:.6rem;text-align:center"></div>
 </div>
+
 <script>
-let cfg={};
-function g(id){return document.getElementById(id);}
+let cfg = {};
+function g(id) { return document.getElementById(id); }
 
-async function load(){
-  const [r1,r2]=await Promise.all([fetch('/api/config'),fetch('/api/data?type=latest')]);
-  const [d1,d2]=await Promise.all([r1.json(),r2.json()]);
-  cfg=d1.config||{};
-  g('sf').innerHTML=
-    '<div class="ig"><label class="il">DEVICE NAME</label>'+
-    '<input class="inp" id="cn" value="'+(cfg.device_name||'')+'"></div>'+
-    '<div class="ig"><label class="il">LOCATION</label>'+
-    '<input class="inp" id="cl2" value="'+(cfg.location||'')+'"></div>'+
-    '<div class="ig"><label class="il">SEND INTERVAL (SECONDS)</label>'+
-    '<input class="inp" id="ci" type="number" min="10" max="3600" value="'+(cfg.send_interval||60)+'">'+
-    '<div style="font-size:.58rem;color:var(--dim);margin-top:4px">Min: 10s · Recommended: 60s</div></div>'+
-    '<button class="btn bt" onclick="save()" style="width:100%;margin-top:5px">💾 SAVE SETTINGS</button>'+
-    '<div style="font-size:.6rem;color:var(--dim);margin-top:8px;line-height:1.6">Settings update on ESP32\'s next data send!</div>';
-  const row=d2.data;
-  const ago=row?Math.round((Date.now()-new Date(row.recorded_at+'Z').getTime())/1000):999;
-  g('ds2').innerHTML=
-    '<div class="sr"><span class="sl">Status</span><span class="sv" style="color:'+(ago<180?'var(--green)':'var(--red)')+'">'+
-    (ago<180?'● ONLINE':'● OFFLINE')+'</span></div>'+
-    '<div class="sr"><span class="sl">Last seen</span><span class="sv">'+(ago<3600?ago+'s ago':'Long ago')+'</span></div>'+
-    '<div class="sr"><span class="sl">Last temp</span><span class="sv" style="color:var(--orange)">'+
-    (row?parseFloat(row.temp).toFixed(1)+'°C':'--')+'</span></div>'+
-    '<div class="sr"><span class="sl">Interval</span><span class="sv" style="color:var(--gold)">'+(cfg.send_interval||60)+'s</span></div>'+
-    '<div class="sr"><span class="sl">Restart pending</span><span class="sv" style="color:'+(cfg.ota_available==='1'?'var(--red)':'var(--green)')+'">'+
-    (cfg.ota_available==='1'?'YES — waiting':'No')+'</span></div>';
+async function load() {
+  const [r1, r2] = await Promise.all([
+    fetch('/api/config'),
+    fetch('/api/data?type=latest')
+  ]);
+  const [d1, d2] = await Promise.all([r1.json(), r2.json()]);
+  cfg = d1.config || {};
+
+  // ── Device Settings Form ──
+  g('sf').innerHTML = \`
+    <div class="ig">
+      <label class="il">DEVICE NAME</label>
+      <input class="inp" id="cn" value="\${cfg.device_name || ''}">
+    </div>
+    <div class="ig">
+      <label class="il">LOCATION</label>
+      <input class="inp" id="cl2" value="\${cfg.location || ''}">
+    </div>
+    <div class="ig">
+      <label class="il">SEND INTERVAL (SECONDS)</label>
+      <input class="inp" id="ci" type="number" min="10" max="3600"
+             value="\${cfg.send_interval || 60}">
+      <div style="font-size:.58rem;color:var(--dim);margin-top:4px">
+        Min: 10s · Recommended: 60s · Max: 3600s
+      </div>
+    </div>
+    <button class="btn bt" onclick="save()" style="width:100%;margin-top:5px">
+      💾 SAVE SETTINGS
+    </button>
+    <div style="font-size:.6rem;color:var(--dim);margin-top:8px;line-height:1.6">
+      Settings update on ESP32's next data send!
+    </div>
+  \`;
+
+  // ── Device Status ──
+  const row = d2.data;
+  const ago = row ? Math.round((Date.now() - new Date(row.recorded_at + 'Z').getTime()) / 1000) : 999;
+  const online = ago < 180;
+  g('ds2').innerHTML = \`
+    <div class="sr">
+      <span class="sl">Status</span>
+      <span class="sv" style="color:\${online ? 'var(--green)' : 'var(--red)'}">
+        \${online ? '● ONLINE' : '● OFFLINE'}
+      </span>
+    </div>
+    <div class="sr">
+      <span class="sl">Last seen</span>
+      <span class="sv">\${ago < 3600 ? ago + 's ago' : 'Long ago'}</span>
+    </div>
+    <div class="sr">
+      <span class="sl">Last temp</span>
+      <span class="sv" style="color:var(--orange)">
+        \${row ? parseFloat(row.temp).toFixed(1) + '°C' : '--'}
+      </span>
+    </div>
+    <div class="sr">
+      <span class="sl">Interval</span>
+      <span class="sv" style="color:var(--gold)">\${cfg.send_interval || 60}s</span>
+    </div>
+    <div class="sr">
+      <span class="sl">Firmware</span>
+      <span class="sv" style="color:var(--teal)">v\${cfg.firmware_ver || '1.0.0'}</span>
+    </div>
+    <div class="sr">
+      <span class="sl">Restart pending</span>
+      <span class="sv" style="color:\${cfg.ota_available === '1' ? 'var(--red)' : 'var(--green)'}">
+        \${cfg.ota_available === '1' ? 'YES — waiting' : 'No'}
+      </span>
+    </div>
+  \`;
+
+  // ── OTA Firmware Section ──
+  const otaOn = cfg.ota_enabled === '1';
+  g('ota-section').innerHTML = \`
+    <!-- Enable/Disable Toggle -->
+    <div style="display:flex;align-items:center;justify-content:space-between;
+         padding:12px;background:rgba(0,0,0,.2);border-radius:3px;margin-bottom:12px">
+      <div>
+        <div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--white);margin-bottom:3px">
+          AUTOMATIC FIRMWARE UPDATE
+        </div>
+        <div style="font-size:.63rem;color:var(--dim)">
+          ESP32 checks for new firmware every \${cfg.ota_check_interval || 15} minutes
+        </div>
+      </div>
+      <div onclick="toggleOTA()" style="cursor:pointer">
+        <div style="width:52px;height:26px;border-radius:13px;
+             background:\${otaOn ? 'var(--teal)' : 'var(--dim)'};
+             position:relative;transition:background .3s;border:1px solid rgba(255,255,255,.1)">
+          <div style="width:20px;height:20px;border-radius:50%;background:white;
+               position:absolute;top:2px;
+               \${otaOn ? 'right:3px' : 'left:3px'};
+               transition:all .3s;box-shadow:0 1px 3px rgba(0,0,0,.3)"></div>
+        </div>
+        <div style="font-family:'Orbitron',monospace;font-size:.5rem;
+             color:\${otaOn ? 'var(--teal)' : 'var(--dim)'};
+             text-align:center;margin-top:3px">
+          \${otaOn ? 'ENABLED' : 'DISABLED'}
+        </div>
+      </div>
+    </div>
+
+    <!-- OTA Config Fields -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;
+         opacity:\${otaOn ? '1' : '0.4'};pointer-events:\${otaOn ? 'auto' : 'none'}">
+      <div class="ig">
+        <label class="il">LATEST FIRMWARE VERSION</label>
+        <input class="inp" id="fw-ver" value="\${cfg.firmware_latest || '1.0.0'}"
+               placeholder="e.g. 1.0.1">
+        <div style="font-size:.58rem;color:var(--dim);margin-top:3px">
+          Current on ESP32: v\${cfg.firmware_ver || '1.0.0'}
+        </div>
+      </div>
+      <div class="ig">
+        <label class="il">CHECK INTERVAL (MINUTES)</label>
+        <input class="inp" id="fw-interval" type="number" min="5" max="1440"
+               value="\${cfg.ota_check_interval || 15}" placeholder="15">
+        <div style="font-size:.58rem;color:var(--dim);margin-top:3px">
+          Min: 5 min · Recommended: 15 min
+        </div>
+      </div>
+      <div class="ig" style="grid-column:span 2">
+        <label class="il">FIRMWARE DOWNLOAD URL (.bin file)</label>
+        <input class="inp" id="fw-url" value="\${cfg.firmware_url || ''}"
+               placeholder="https://github.com/you/repo/releases/download/v1.0.1/firmware.bin">
+        <div style="font-size:.58rem;color:var(--dim);margin-top:3px">
+          Direct download link to .bin file — must be HTTPS!
+        </div>
+      </div>
+    </div>
+
+    <!-- Status + Save -->
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button class="btn bt" onclick="saveOTA()"
+              style="\${otaOn ? '' : 'opacity:.4;pointer-events:none'}">
+        💾 SAVE OTA SETTINGS
+      </button>
+      <div style="font-size:.65rem;color:var(--dim)">
+        Last check: \${cfg.last_ota_check ? new Date(cfg.last_ota_check).toLocaleString() : 'Never'}
+      </div>
+      <div style="font-size:.65rem;color:var(--dim)">
+        Last update: \${cfg.last_ota_update ? new Date(cfg.last_ota_update).toLocaleString() : 'Never'}
+      </div>
+    </div>
+
+    <!-- Status badge -->
+    <div style="margin-top:10px;padding:8px 12px;border-radius:3px;font-size:.65rem;
+         background:\${otaOn ? 'rgba(0,229,204,.06)' : 'rgba(42,80,112,.1)'};
+         border:1px solid \${otaOn ? 'rgba(0,229,204,.2)' : 'rgba(42,80,112,.3)'}">
+      \${otaOn
+        ? '✅ OTA ACTIVE — ESP32 will check for updates every ' + (cfg.ota_check_interval || 15) + ' minutes'
+        : '⏸️ OTA DISABLED — Enable above to allow automatic firmware updates'
+      }
+    </div>
+  \`;
 }
 
-async function save(){
-  const body={
-    device_name:  g('cn').value,
-    location:     g('cl2').value,
-    send_interval:g('ci').value
-  };
-  const r=await fetch('/api/config',{method:'POST',
-    headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-  const d=await r.json();
-  showMsg(d.status==='ok'?'✅ SAVED! ESP32 updates on next send!':'❌ SAVE FAILED!',
-          d.status==='ok'?'rgba(0,221,119,.1)':'rgba(255,51,85,.1)',
-          d.status==='ok'?'var(--green)':'var(--red)');
-  setTimeout(load,1500);
+// Toggle OTA enable/disable
+async function toggleOTA() {
+  const newVal = cfg.ota_enabled === '1' ? '0' : '1';
+  await fetch('/api/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ota_enabled: newVal })
+  });
+  showMsg(
+    newVal === '1' ? '✅ OTA ENABLED!' : '⏸️ OTA DISABLED!',
+    newVal === '1' ? 'rgba(0,229,204,.1)' : 'rgba(42,80,112,.1)',
+    newVal === '1' ? 'var(--teal)' : 'var(--dim)'
+  );
+  setTimeout(load, 800);
 }
 
-async function doRestart(){
-  if(!confirm('Restart ESP32 on next data send?'))return;
-  const r=await fetch('/api/config',{method:'POST',
-    headers:{'Content-Type':'application/json'},body:JSON.stringify({restart:true})});
-  const d=await r.json();
-  showMsg('⚠️ RESTART QUEUED! ESP32 restarts on next send!','rgba(255,136,0,.1)','var(--gold)');
-  setTimeout(load,1500);
+// Save device settings
+async function save() {
+  const r = await fetch('/api/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      device_name:   g('cn').value,
+      location:      g('cl2').value,
+      send_interval: g('ci').value
+    })
+  });
+  const d = await r.json();
+  showMsg(
+    d.status === 'ok' ? '✅ SAVED! Updates on next ESP32 send!' : '❌ SAVE FAILED!',
+    d.status === 'ok' ? 'rgba(0,221,119,.1)' : 'rgba(255,51,85,.1)',
+    d.status === 'ok' ? 'var(--green)' : 'var(--red)'
+  );
+  setTimeout(load, 1500);
 }
 
-function showMsg(txt,bg,col){
-  const el=g('msg');
-  el.style.display='block';el.textContent=txt;
-  el.style.background=bg;el.style.color=col;
-  el.style.border='1px solid '+col;
-  setTimeout(()=>el.style.display='none',4000);
+// Save OTA settings
+async function saveOTA() {
+  const ver = g('fw-ver').value.trim();
+  const url = g('fw-url').value.trim();
+  const interval = g('fw-interval').value;
+
+  if (!ver) { showMsg('❌ Enter firmware version!', 'rgba(255,51,85,.1)', 'var(--red)'); return; }
+  if (url && !url.startsWith('https://')) {
+    showMsg('❌ URL must start with https://', 'rgba(255,51,85,.1)', 'var(--red)'); return;
+  }
+
+  const r = await fetch('/api/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      firmware_latest:    ver,
+      firmware_url:       url,
+      ota_check_interval: interval
+    })
+  });
+  const d = await r.json();
+  showMsg(
+    d.status === 'ok' ? '✅ OTA SETTINGS SAVED! ESP32 will check at next interval!' : '❌ SAVE FAILED!',
+    d.status === 'ok' ? 'rgba(0,229,204,.1)' : 'rgba(255,51,85,.1)',
+    d.status === 'ok' ? 'var(--teal)' : 'var(--red)'
+  );
+  setTimeout(load, 1500);
+}
+
+// Remote restart
+async function doRestart() {
+  if (!confirm('Restart ESP32 on next data send?')) return;
+  await fetch('/api/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ restart: true })
+  });
+  showMsg('⚠️ RESTART QUEUED! ESP32 restarts on next send!', 'rgba(255,136,0,.1)', 'var(--gold)');
+  setTimeout(load, 1500);
+}
+
+function showMsg(txt, bg, col) {
+  const el = g('msg');
+  el.style.display = 'block';
+  el.textContent = txt;
+  el.style.background = bg;
+  el.style.color = col;
+  el.style.border = '1px solid ' + col;
+  setTimeout(() => el.style.display = 'none', 4000);
 }
 
 load();
-</script></body></html>`;
+</script>
+</body></html>`;   
 }

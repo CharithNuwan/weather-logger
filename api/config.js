@@ -1,4 +1,4 @@
-// api/config.js — get and update ESP32 settings from web
+// api/config.js
 const { getDB, initDB } = require('../lib/db');
 
 module.exports = async function handler(req, res) {
@@ -6,25 +6,19 @@ module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
     await initDB();
     const db = getDB();
 
-    // GET — return all config
     if (req.method === 'GET') {
       const rows = await db.execute('SELECT key, value FROM config');
       const config = {};
-      rows.rows.forEach(r => {
-        config[r.key || r[0]] = r.value || r[1];
-      });
+      rows.rows.forEach(r => { config[r.key || r[0]] = r.value || r[1]; });
       return res.status(200).json({ status: 'ok', config });
     }
 
-    // POST — update settings from web dashboard
     if (req.method === 'POST') {
       let body = req.body;
       if (typeof body === 'string') {
@@ -34,7 +28,9 @@ module.exports = async function handler(req, res) {
 
       const allowed = [
         'send_interval', 'device_name', 'location',
-        'ota_available', 'firmware_ver'
+        'ota_available', 'firmware_ver',
+        'ota_enabled', 'firmware_latest', 'firmware_url',
+        'ota_check_interval'
       ];
 
       for (const [key, value] of Object.entries(body)) {
@@ -45,23 +41,38 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      // Remote restart — ESP32 restarts on next data send!
+      // Remote restart
       if (body.restart) {
         await db.execute({
-          sql:  'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
+          sql: 'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
           args: ['ota_available', '1']
         });
         await db.execute({
-          sql:  'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
+          sql: 'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
           args: ['last_restart', new Date().toISOString()]
         });
       }
 
-      // Clear restart flag
       if (body.clear_restart) {
         await db.execute({
-          sql:  'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
+          sql: 'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
           args: ['ota_available', '0']
+        });
+      }
+
+      // Track when OTA check happened
+      if (body.ota_checked) {
+        await db.execute({
+          sql: 'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
+          args: ['last_ota_check', new Date().toISOString()]
+        });
+      }
+
+      // Track when OTA update happened
+      if (body.ota_updated) {
+        await db.execute({
+          sql: 'INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)',
+          args: ['last_ota_update', new Date().toISOString()]
         });
       }
 
