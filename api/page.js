@@ -200,12 +200,14 @@ function updChart(c,data,field){
 }
 
 function comfort(t,h){
+  // Tuned for Sri Lanka tropical climate (normal range: 27–35°C, 70–90% humidity)
   const hi=t+0.33*(h/100*6.105*Math.exp(17.27*t/(237.7+t)))-4;
-  if(hi<21)return{i:'🥶',l:'COLD',d:'Below comfort',c:'#0088ff'};
-  if(hi<24)return{i:'😊',l:'COMFORTABLE',d:'Ideal!',c:'#00dd77'};
-  if(hi<27)return{i:'😐',l:'WARM',d:'Slightly warm',c:'#f0a500'};
-  if(hi<30)return{i:'🥵',l:'HOT',d:'Uncomfortable',c:'#ff8800'};
-  return{i:'🔥',l:'VERY HOT',d:'Dangerous!',c:'#ff3355'};
+  if(hi<22)return{i:'❄️', l:'COOL',        d:'Cool for Sri Lanka', c:'#0088ff'};
+  if(hi<28)return{i:'😊', l:'COMFORTABLE', d:'Pleasant tropical',  c:'#00dd77'};
+  if(hi<32)return{i:'🌤️', l:'WARM',        d:'Typical Sri Lanka',  c:'#f0a500'};
+  if(hi<36)return{i:'☀️', l:'HOT',         d:'Stay hydrated',      c:'#ff8800'};
+  if(hi<40)return{i:'🥵', l:'VERY HOT',    d:'Limit outdoor time', c:'#ff5500'};
+  return{i:'🔥',l:'EXTREME HEAT',d:'Stay indoors!',c:'#ff3355'};
 }
 
 function chg(v,p,u){
@@ -401,8 +403,9 @@ async function load(){
     document.getElementById('sc').textContent='NO DATA FOR TODAY YET';return;
   }
   const at=parseFloat(t.avg_temp), ah=parseFloat(t.avg_hum);
-  const wd=at>32?'🔥 Very hot':at>28?'☀️ Hot':at>24?'⛅ Warm':at>20?'🌤️ Pleasant':'🌡️ Cool';
-  const hd=ah>80?'💦 Very humid':ah>65?'💧 Humid':ah>50?'😊 Comfortable':'🌵 Dry';
+  // Sri Lanka tropical thresholds (normal daily temp: 28-33C, humidity: 70-85%)
+  const wd=at>38?'🔥 Extreme heat':at>34?'☀️ Very hot day':at>30?'🌤️ Hot & sunny':at>27?'😊 Typical Sri Lanka':at>24?'🌥️ Pleasantly warm':'❄️ Cool day';
+  const hd=ah>90?'💦 Very humid':ah>80?'💧 Humid':ah>65?'😊 Comfortable':ah>50?'🌿 Moderate':'🌵 Dry';
   document.getElementById('sc').innerHTML=
     '<div class="g4" style="margin-bottom:15px">'+
     '<div class="panel" style="text-align:center;padding:20px"><div style="font-size:2rem">🌡️</div>'+
@@ -464,13 +467,15 @@ async function load(){
   const latest=d1.data, weekly=d3.data||[];
   if(!latest){document.getElementById('pc').textContent='NO DATA YET';return;}
   const t=parseFloat(latest.temp), h=parseFloat(latest.humidity), p=parseFloat(latest.pressure);
+  // Sri Lanka: normal pressure 1005-1010 hPa, high humidity year-round
   let rain=0, rd='';
-  if(p<1005){rain=75;rd='Low pressure — rain likely!';}
-  else if(p<1010){rain=45;rd='Pressure dropping — possible rain';}
-  else if(p<1015){rain=20;rd='Stable — mostly dry';}
-  else{rain=5;rd='High pressure — clear weather';}
-  if(h>80)rain=Math.min(95,rain+20);
-  if(h>90)rain=Math.min(99,rain+15);
+  if(p<1000){rain=85;rd='Very low pressure — heavy rain likely!';}
+  else if(p<1005){rain=65;rd='Low pressure — rain expected';}
+  else if(p<1008){rain=40;rd='Slightly low — possible showers';}
+  else if(p<1012){rain=20;rd='Normal pressure — mostly dry';}
+  else{rain=8;rd='High pressure — clear weather';}
+  if(h>85)rain=Math.min(95,rain+20);
+  else if(h>75)rain=Math.min(90,rain+10);
   const rc=rain>60?'var(--blue)':rain>30?'var(--gold)':'var(--green)';
   const ri=rain>60?'🌧️':rain>30?'⛅':'☀️';
   const hr=new Date().getHours();
@@ -491,7 +496,7 @@ async function load(){
     '<div style="width:'+rain+'%;height:100%;background:'+rc+';border-radius:3px"></div></div></div>'+
     '<div class="panel" style="padding:20px"><div class="ptl">▸ INDICATORS</div>'+
     '<div class="sr"><span class="sl">Pressure</span><span class="sv" style="color:'+(p<1010?'var(--red)':'var(--green)')+'">'+
-    (p<1005?'▼ FALLING FAST':p<1010?'▼ FALLING':p<1015?'▬ STABLE':'▲ RISING')+' ('+p+' hPa)</span></div>'+
+    (p<1000?'▼ VERY LOW':p<1005?'▼ FALLING':p<1010?'▬ NORMAL':'▲ HIGH')+' ('+p+' hPa)</span></div>'+
     '<div class="sr"><span class="sl">Humidity</span><span class="sv" style="color:'+(h>80?'var(--blue)':'var(--green)')+'">'+
     (h>80?'💧 HIGH ':h>60?'😊 NORMAL ':'🌵 LOW ')+h+'%</span></div>'+
     '<div class="sr"><span class="sl">Temperature</span><span class="sv" style="color:var(--orange)">'+t.toFixed(1)+'°C</span></div>'+
